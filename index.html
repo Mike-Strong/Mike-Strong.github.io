@@ -195,7 +195,7 @@
               <span class="post-meta-item-text">发表于</span>
               
 
-              <time title="创建时间：2024-02-05 11:38:39 / 修改时间：12:13:27" itemprop="dateCreated datePublished" datetime="2024-02-05T11:38:39+08:00">2024-02-05</time>
+              <time title="创建时间：2024-02-05 11:38:39 / 修改时间：12:25:50" itemprop="dateCreated datePublished" datetime="2024-02-05T11:38:39+08:00">2024-02-05</time>
             </span>
 
           
@@ -209,30 +209,15 @@
     <div class="post-body" itemprop="articleBody">
 
       
-          <h2 id="服务端口被占用"><a href="#服务端口被占用" class="headerlink" title="服务端口被占用"></a>服务端口被占用</h2><p>因为在服务器上安装了很多服务，例如像127.0.0.1:8080端口早就被别的服务占用了</p>
-<blockquote>
-<p>The standalone arm64 .deb does not support Ubuntu 16.04 or earlier. Please<br>upgrade or <a href="#npm">build with npm</a>.</p>
-</blockquote>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">curl -fOL https://github.com/coder/code-server/releases/download/v<span class="variable">$VERSION</span>/code-server_<span class="variable">$&#123;VERSION&#125;</span>_amd64.deb</span><br><span class="line">sudo dpkg -i code-server_<span class="variable">$&#123;VERSION&#125;</span>_amd64.deb</span><br><span class="line">sudo systemctl <span class="built_in">enable</span> --now code-server@<span class="variable">$USER</span></span><br><span class="line"><span class="comment"># Now visit http://127.0.0.1:8080. Your password is in ~/.config/code-server/config.yaml</span></span><br></pre></td></tr></table></figure>
-
-<p>报错如下：</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">root@kubernetes-master:/# systemctl status code-server@root</span><br><span class="line">× code-server@root.service - code-server</span><br><span class="line">     Loaded: loaded (/lib/systemd/system/code-server@.service; enabled; vendor preset: enabled)</span><br><span class="line">     Active: failed (Result: exit-code) since Mon 2024-02-05 09:52:00 CST; 37min ago</span><br><span class="line">   Main PID: 3855609 (code=exited, status=1/FAILURE)</span><br><span class="line">        CPU: 892ms</span><br><span class="line"></span><br><span class="line">Feb 05 09:52:00 kubernetes-master systemd[1]: code-server@root.service: Scheduled restart job, restart counter is at 5.</span><br><span class="line">Feb 05 09:52:00 kubernetes-master systemd[1]: Stopped code-server.</span><br><span class="line">Feb 05 09:52:00 kubernetes-master systemd[1]: code-server@root.service: Start request repeated too quickly.</span><br><span class="line">Feb 05 09:52:00 kubernetes-master systemd[1]: code-server@root.service: Failed with result &#x27;exit-code&#x27;.</span><br><span class="line">Feb 05 09:52:00 kubernetes-master systemd[1]: Failed to start code-server.</span><br></pre></td></tr></table></figure>
-
-<p>但是这时配置文件也没有生成，查看service文件也没有提示有配置文件</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">~ cat /lib/systemd/system/code-server@.service</span><br><span class="line">[Unit]</span><br><span class="line">Description=code-server</span><br><span class="line">After=network.target</span><br><span class="line"></span><br><span class="line">[Service]</span><br><span class="line">Type=exec</span><br><span class="line">ExecStart=/usr/bin/code-server</span><br><span class="line">Restart=always</span><br><span class="line">User=%i</span><br><span class="line"></span><br><span class="line">[Install]</span><br><span class="line">WantedBy=default.target</span><br></pre></td></tr></table></figure>
-
-<p>这时尝试手工执行code-server命令，就会在用户目录下生成.config文件夹了，这时的报错也比较明显了：</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">root@kubernetes-master:/# code-server</span><br><span class="line">[2024-02-05T02:30:25.326Z] info  Wrote default config file to /root/.config/code-server/config.yaml</span><br><span class="line">[2024-02-05T02:30:25.687Z] info  code-server 4.20.1 e76afa4a2bf4667a3c9f71bf56ef34b8ad365fbe</span><br><span class="line">[2024-02-05T02:30:25.687Z] info  Using user-data-dir /root/.local/share/code-server</span><br><span class="line">[2024-02-05T02:30:25.692Z] error listen EADDRINUSE: address already in use 127.0.0.1:8080</span><br><span class="line"></span><br></pre></td></tr></table></figure>
-
-<p>这时只需要去修改&#x2F;root&#x2F;.config&#x2F;code-server&#x2F;config.yaml文件，修改绑定的地址和端口就可以了。</p>
-<p>PS：也可能是我之前装了又删了导致，可能没有可复现性，而且既然装好了，自然也就不再折腾了</p>
-<h2 id="dominaname-code页面提示报错"><a href="#dominaname-code页面提示报错" class="headerlink" title="dominaname&#x2F;code页面提示报错"></a>dominaname&#x2F;code页面提示报错</h2><p>nginx的配置是这样的：</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">location /code/ &#123;</span><br><span class="line">     proxy_pass http://127.0.0.1:9000;</span><br><span class="line">     # sendfile off;</span><br><span class="line">     add_header X-debug-message &quot;/code/&quot; always;</span><br><span class="line">     proxy_set_header   Host             $host;</span><br><span class="line">     proxy_set_header   X-Real-IP        $remote_addr;</span><br><span class="line">     proxy_set_header   X-Forwarded-For  $proxy_add_x_forwarded_for;</span><br><span class="line">     rewrite  ^/code/(.*)  /$1 break;</span><br><span class="line">     &#125;</span><br></pre></td></tr></table></figure>
-<p>报错是：<br>An unexpected error occurred that requires a reload of this page.<br>The workbench failed to connect to the server (Error: WebSocket close with status code 1006)<br>加上以下3行即可：</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">proxy_set_header Upgrade $http_upgrade;</span><br><span class="line">proxy_set_header Connection upgrade;</span><br><span class="line">proxy_set_header Accept-Encoding gzip;</span><br></pre></td></tr></table></figure>
-
-<h2 id="自带的terminal不能使用之前的alias，不能使用方向键"><a href="#自带的terminal不能使用之前的alias，不能使用方向键" class="headerlink" title="自带的terminal不能使用之前的alias，不能使用方向键"></a>自带的terminal不能使用之前的alias，不能使用方向键</h2><p>直接使用bash就可以了，反正部署在云端，24小时不关机，bash一下，以后无忧呀。。。</p>
-
+          <p>因为在服务器上部署了hexo，每次又不想在本地再pull一份下来修改，就在服务器上又部署了一个code-server，这样就可以直接在网页修改代码，然后发布到github上，方便快捷，如果有点什么开发也可以直接网页调试，无需远程调试了。在部署的时候碰到几个问题，这里记录一下。</p>
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2024/02/05/%E7%AC%AC%E4%B8%80%E6%AC%A1%E5%AE%89%E8%A3%85code-server%E7%A2%B0%E5%88%B0%E7%9A%84%E9%97%AE%E9%A2%98/#more" rel="contents">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
       
     </div>
 
